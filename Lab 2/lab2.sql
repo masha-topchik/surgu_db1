@@ -1,106 +1,112 @@
-CREATE TABLE readers (
-    reader_id SERIAL PRIMARY KEY,
-    full_name VARCHAR(150) NOT NULL,
-    phone VARCHAR(20) NOT NULL UNIQUE
+CREATE TABLE Books (
+    ISBN VARCHAR (50) PRIMARY KEY,
+    Title VARCHAR (40),
+    Year INT
 );
 
-CREATE TABLE authors (
-    author_id SERIAL PRIMARY KEY,
-    full_name VARCHAR(150) NOT NULL
+CREATE TABLE Author (
+    Author_ID INT PRIMARY KEY,
+    Full_name VARCHAR (50)
 );
 
-CREATE TABLE books (
-    isbn VARCHAR(20) PRIMARY KEY,
-    title VARCHAR(200) NOT NULL,
-    publication_year INT NOT NULL CHECK (publication_year >= 1500 AND publication_year <= 2026)
-); 
-
-CREATE TABLE book_authors (
-    book_isbn VARCHAR(20) REFERENCES books(isbn) ON DELETE CASCADE,
-    author_id INT REFERENCES authors(author_id) ON DELETE CASCADE,
-    PRIMARY KEY (book_isbn, author_id)
+CREATE TABLE Authorship (
+    ISBN_Book  VARCHAR (50),
+    Author_ID  INT,
+    PRIMARY KEY (ISBN_Book, Author_ID),
+    FOREIGN KEY (Author_ID) REFERENCES Author(Author_ID),
+    FOREIGN KEY (ISBN_Book) REFERENCES Books(ISBN)
 );
 
-CREATE TABLE loans (
-    loan_id SERIAL PRIMARY KEY,
-    reader_id INT NOT NULL REFERENCES readers(reader_id) ON DELETE CASCADE,
-    book_isbn VARCHAR(20) NOT NULL REFERENCES books(isbn) ON DELETE CASCADE,
-    issue_date DATE NOT NULL, -- Дата выдачи
-    planned_return_date DATE NOT NULL, -- Планируемая дата возврата
-    actual_return_date DATE, -- Фактическая дата возврата
-    CHECK (planned_return_date >= issue_date),
-    CHECK (actual_return_date IS NULL OR actual_return_date >= issue_date)
+CREATE TABLE Loan (
+    Loan_ID INT PRIMARY KEY,
+    Reader_ID INT ,
+    Book_ISBN VARCHAR (50),
+    Issue_date DATE,
+    Planned_return_date DATE,
+    Actual_return_date DATE NULL,
+
+    FOREIGN KEY (Reader_ID) REFERENCES Readers(Card_number),
+    FOREIGN KEY (Book_ISBN) REFERENCES Books(ISBN)
 );
 
-INSERT INTO readers (full_name, phone) VALUES
-('Анна Петрова', '+7-900-111-22-33'),
-('Иван Соколов', '+7-900-222-33-44'),
-('Мария Ким', '+7-900-333-44-55'),
-('Олег Васильев', '+7-900-444-55-66');
+CREATE TABLE Readers (
+    Card_number INT PRIMARY KEY,
+    Full_name VARCHAR (50),
+    Phone VARCHAR (11)
+);
 
-INSERT INTO authors (full_name) VALUES
-('Михаил Булгаков'),
-('Федор Достоевский'),
-('Лев Толстой'),
-('Илья Ильф'),
-('Евгений Петров'),
-('Аркадий Стругацкий'),
-('Борис Стругацкий');
+-- Практика 3-5
 
-INSERT INTO books (isbn, title, publication_year) VALUES
-('978-5-17-118366-8', 'Мастер и Маргарита', 1967),
-('978-5-389-06256-6', 'Преступление и наказание', 1866),
-('978-5-04-116716-3', 'Война и мир', 1869),
-('978-5-699-12014-7', 'Золотой теленок', 1931),
-('978-5-389-03713-7', 'Пикник на обочине', 1972);
+INSERT INTO Readers (Card_number, Full_name, Phone)
+VALUES
+(1, 'Анна Соколова', '79001112233'),
+(2, 'Иван Соколов', '79002223344'),
+(3, 'Мария Ким', '79003334455'),
+(4, 'Олег Васильев', '79004445566');
 
-INSERT INTO book_authors (book_isbn, author_id) VALUES
-('978-5-17-118366-8', 1),
-('978-5-389-06256-6', 2), 
-('978-5-04-116716-3', 3), 
-('978-5-699-12014-7', 4), 
-('978-5-699-12014-7', 5), 
-('978-5-389-03713-7', 6),
-('978-5-389-03713-7', 7);
+INSERT INTO Author (Author_ID, Full_name)
+VALUES
+    (1, 'Михаил Булгаков'),
+    (2, 'Федор Достоевский'),
+    (3, 'Лев Толстой'),
+    (4, 'Илья Ильф'),
+    (5, 'Евгений Петров'),
+    (6, 'Аркадий Стругацкий'),
+    (7, 'Борис Стругацкий');
 
-INSERT INTO loans (reader_id, book_isbn, issue_date, planned_return_date, actual_return_date) VALUES
-(1, '978-5-17-118366-8', '2026-01-10', '2026-01-24', '2026-01-20'),
-(2, '978-5-389-06256-6', '2026-01-15', '2026-01-29', '2026-01-28'),
-(3, '978-5-04-116716-3', '2026-02-01', '2026-02-15', '2026-02-14'),
-(1, '978-5-699-12014-7', '2026-03-01', '2026-03-15', NULL),
-(1, '978-5-389-03713-7', '2026-03-10', '2026-03-24', NULL),
-(2, '978-5-04-116716-3', '2026-03-12', '2026-03-26', NULL);
+INSERT INTO Books (ISBN, Title, Year)
+VALUES
+    ('978-5-17-118366-8', 'Мастер и Маргарита', 1967),
+    ('978-5-389-06256-6', 'Преступление и наказание', 1866),
+    ('978-5-04-116716-3', 'Война и мир', 1869),
+    ('978-5-699-12014-7', 'Золотой теленок', 1931),
+    ('978-5-389-03713-7', 'Пикник на обочине', 1972);
 
-UPDATE readers
-SET phone = '+7-900-999-88-77'
-WHERE full_name = 'Иван Соколов';
+INSERT INTO Authorship (ISBN_Book, Author_ID)
+VALUES
+    ('978-5-17-118366-8', 1),
+    ('978-5-389-06256-6', 2),
+    ('978-5-04-116716-3', 3),
+    ('978-5-699-12014-7', 4),
+    ('978-5-699-12014-7', 5),
+    ('978-5-389-03713-7', 6),
+    ('978-5-389-03713-7', 7);
 
-UPDATE loans
-SET actual_return_date = '2026-03-18'
-WHERE loan_id = 4 AND actual_return_date IS NULL;
+INSERT INTO Loan
+    (Loan_ID, Reader_ID, Book_ISBN, Issue_date, Planned_return_date, Actual_return_date)
+VALUES
+    (1, 1, '978-5-17-118366-8', '2026-09-01', '2026-09-15', NULL),
+    (2, 1, '978-5-389-06256-6', '2026-09-05', '2026-09-19', NULL),
+    (3, 2, '978-5-04-116716-3', '2026-08-01', '2026-08-15', '2026-08-14'),
+    (4, 3, '978-5-699-12014-7', '2026-08-10', '2026-08-24', '2026-08-23'),
+    (5, 4, '978-5-389-03713-7', '2026-09-10', '2026-09-24', NULL),
+    (6, 2, '978-5-17-118366-8', '2026-07-01', '2026-07-15', '2026-07-14');
 
-INSERT INTO readers (full_name, phone) VALUES
-('Тестовый Читатель', '+7-999-000-00-00');
+UPDATE Readers
+SET Phone = '79009999999'
+WHERE Card_number = 1;
 
-DELETE FROM readers
-WHERE full_name = 'Тестовый Читатель' 
+UPDATE Loan
+SET Actual_return_date = '2026-09-20'
+WHERE Loan_ID = 1;
 
-SELECT * FROM Readers; --1
+INSERT INTO Readers (Card_number, Full_name, Phone)
+VALUES (5, 'Тестовый читатель', '79005555555');
 
-SELECT title, publication_year FROM Books; --2
+DELETE FROM Readers
+WHERE Card_number = 5;
 
-SELECT title, publication_year FROM Books WHERE publication_year BETWEEN 1801 AND 1900 --3
+DELETE FROM Readers
 
-SELECT * FROM Books WHERE publication_year BETWEEN 1917 AND 1991 --4
+-- Практика 7
 
-SELECT * FROM Readers WHERE phone = '+7-900-999-88-77'; --5 
-
-SELECT * FROM Readers WHERE full_name LIKE '%ов'; --6
-
-SELECT * FROM loans where actual_return_date IS NULL; --7
-
-SELECT title, publication_year FROM Books ORDER BY publication_year; --8
-
-SELECT planned_return_date FROM loans ORDER BY planned_return_date; --9
-
-SELECT * FROM Books ORDER BY publication_year DESC LIMIT 3; --10
+SELECT * FROM Readers;
+SELECT Title, Year FROM Books;
+SELECT Title, Year FROM Books WHERE Year BETWEEN 1801 AND 1900;
+SELECT Title, Year FROM Books WHERE Year BETWEEN 1917 AND 1991;
+SELECT * FROM Readers WHERE Phone = '+7-900-111-22-33';
+SELECT * FROM Readers WHERE Full_name LIKE '%ов%';
+SELECT * FROM Loan WHERE Actual_return_date IS NULL;
+SELECT * FROM Books ORDER BY Title;
+SELECT * FROM Loan WHERE Actual_return_date IS NULL ORDER BY Planned_return_date ASC;
+SELECT * FROM Books ORDER BY Year DESC LIMIT 3;
