@@ -65,3 +65,73 @@ INSERT INTO Order_Items (order_id, product_id, quantity, price_per_unit) VALUES
 (3, 3, 1, 25000.00),  -- Иван купил Кофемашину
 (4, 1, 1, 70000.00),  -- Алексей купил Смартфон
 (4, 5, 1, 4500.00);   -- и Фен
+
+-- 1. Заказы и их владельцы (INNER JOIN):
+SELECT 
+    c.full_name, 
+    o.order_date
+FROM Orders o
+INNER JOIN Customers c ON o.customer_id = c.customer_id;
+
+-- 2. Покупатели без заказов (LEFT JOIN):
+SELECT 
+    c.full_name
+FROM Customers c
+LEFT JOIN Orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;
+
+-- 3. Состав конкретного заказа (Multi-JOIN):
+SELECT 
+    p.product_name, 
+    oi.quantity, 
+    oi.price_per_unit
+FROM Order_Items oi
+JOIN Products p ON oi.product_id = p.product_id
+WHERE oi.order_id = 1;
+
+-- 4. Покупатели определенного товара (Подзапрос с IN):
+SELECT full_name
+FROM Customers
+WHERE customer_id IN (
+    SELECT o.customer_id
+    FROM Orders o
+    JOIN Order_Items oi ON o.order_id = oi.order_id
+    JOIN Products p ON oi.product_id = p.product_id
+    WHERE p.product_name = 'Смартфон'
+);
+
+-- 5. Дорогие товары (Скалярный подзапрос):
+SELECT 
+    product_name, 
+    price
+FROM Products
+WHERE price > (
+    SELECT AVG(price) 
+    FROM Products
+);
+
+-- 6. Заказы с дорогими товарами (Коррелирующий подзапрос c EXISTS):
+SELECT 
+    o.order_id, 
+    o.order_date
+FROM Orders o
+WHERE EXISTS (
+    SELECT 1
+    FROM Order_Items oi
+    JOIN Products p ON oi.product_id = p.product_id
+    WHERE oi.order_id = o.order_id 
+      AND p.price > 100000
+);
+
+-- 7. Сравнение подходов
+-- Используя LEFT JOIN:
+SELECT c.full_name
+FROM Customers c
+LEFT JOIN (
+    SELECT DISTINCT o.customer_id
+    FROM Orders o
+    JOIN Order_Items oi ON o.order_id = oi.order_id
+    JOIN Products p ON oi.product_id = p.product_id
+    WHERE p.product_name = 'Ноутбук'
+) laptop_buyers ON c.customer_id = laptop_buyers.customer_id
+WHERE laptop_buyers.customer_id IS NULL;
