@@ -135,3 +135,82 @@ LEFT JOIN (
     WHERE p.product_name = 'Ноутбук'
 ) laptop_buyers ON c.customer_id = laptop_buyers.customer_id
 WHERE laptop_buyers.customer_id IS NULL;
+
+SELECT
+    c.full_name,
+    o.order_date
+FROM Customers c
+JOIN Orders o ON c.customer_id = o.customer_id;
+
+-- Используя подзапрос с NOT IN:
+SELECT full_name
+FROM Customers
+WHERE customer_id NOT IN (
+    SELECT o.customer_id
+    FROM Orders o
+    JOIN Order_Items oi ON o.order_id = oi.order_id
+    JOIN Products p ON oi.product_id = p.product_id
+    WHERE p.product_name = 'Ноутбук'
+);
+
+-- 8. Товары, которые еще никто не заказывал (RIGHT JOIN или LEFT JOIN с IS NULL):
+SELECT p.product_name
+FROM Order_Items oi
+RIGHT JOIN Products p ON oi.product_id = p.product_id
+WHERE oi.order_item_id IS NULL;
+
+-- 9. Полный список активности (FULL OUTER JOIN):
+SELECT 
+    c.full_name, 
+    p.product_name, 
+    oi.quantity
+FROM Customers c
+FULL OUTER JOIN Orders o ON c.customer_id = o.customer_id
+FULL OUTER JOIN Order_Items oi ON o.order_id = oi.order_id
+FULL OUTER JOIN Products p ON oi.product_id = p.product_id;
+
+-- 10. Покупатели, купившие самый дорогой товар (JOIN vs Подзапрос)
+-- Используя JOIN с подзапросом:
+SELECT DISTINCT c.full_name
+FROM Customers c
+JOIN Orders o ON c.customer_id = o.customer_id
+JOIN Order_Items oi ON o.order_id = oi.order_id
+JOIN Products p ON oi.product_id = p.product_id
+JOIN (
+    SELECT MAX(price) AS max_price 
+    FROM Products
+) top_price ON p.price = top_price.max_price;
+
+-- Используя только подзапросы (без явного JOIN в основном запросе, если возможно):
+SELECT full_name
+FROM Customers
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM Orders
+    WHERE order_id IN (
+        SELECT order_id
+        FROM Order_Items
+        WHERE product_id IN (
+            SELECT product_id
+            FROM Products
+            WHERE price = (SELECT MAX(price) FROM Products)
+        )
+    )
+);
+
+--11. Все возможные пары "покупатель-категория" (CROSS JOIN):
+SELECT 
+    c.full_name, 
+    cat.category
+FROM Customers c
+CROSS JOIN (
+    SELECT DISTINCT category 
+    FROM Products
+) cat;
+
+--12. Кто кого порекомендовал (SELF JOIN):
+SELECT 
+    c1.full_name AS new_customer, 
+    c2.full_name AS recommended_by
+FROM Customers c1
+JOIN Customers c2 ON c1.recommended_by = c2.customer_id;
